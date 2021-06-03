@@ -116,10 +116,13 @@ let MyScene = new Phaser.Class({
     ball.body.setAllowGravity(false)
     isBelowHoop=true;
     frontRim.setDepth(-1)
+    if(!win){
+      location.href = 'https://www.google.com.ar';
+    }
     win=true
     lose=true
     winAnim=false
-    location.href = 'https://www.google.com.ar';
+    
   },
 
   click: function () {
