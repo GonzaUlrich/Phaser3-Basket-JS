@@ -119,6 +119,7 @@ let MyScene = new Phaser.Class({
     win=true
     lose=true
     winAnim=false
+    location.href = 'https://www.google.com.ar';
   },
 
   click: function () {
