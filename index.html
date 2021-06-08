@@ -5,11 +5,307 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Basketball Game</title>
-	<script type="text/javascript" src="../phaser.min.js"></script>
-    <link rel="stylesheet" href="../index.css">
+	<script type="text/javascript" src="phaser.min.js"></script>
+    <style>
+    
+    @font-face {
+        font-family: scoreBoard;
+        src: url(Img/scoreboard.ttf);
+    }
+    
+    body {
+        margin: 0;
+        background-color: rgb(94, 94, 94);
+        max-width: 100%;
+        overflow-x: hidden;
+        overflow-y:hidden;
+        
+    }
+    canvas {
+        margin: 0 auto;
+        border: thin solid black;  
+    }
+    h2 {
+        text-align: center;
+    }
+    </style>
+
 </head>
 <body>
-    <!--<a href="http://www.freepik.com">Designed by Freepik</a>--> 
-	<script src="../Index.js"></script>
+    <div style="font-family:scoreboard; position:absolute; left:-1000px; visibility:hidden;">.</div>
+
+    <script>
+        
+    //Game
+    var hoop, frontRim, leftRim, rightRim, bounceRims, netRims1, netRims2 , background
+var ball
+var startMouseX, startMouseY, endMouseX, endMouseY
+var xForce = -100
+var onClick = false
+var launched = false
+var isBelowHoop = true
+var win = true
+var winCounter = 0;
+var lose = true
+var winAnim=false
+var winImg0,winImg1,winImg2,loseImg0,loseImg1,loseImg2
+var winGroup=[]
+var loseGroup=[]
+var scoreText
+
+let MyScene = new Phaser.Class({
+  Extends: Phaser.Scene,
+  initialize: function myscene() {
+    Phaser.Scene.call(this, {
+      key: 'myscene',
+    })
+  },
+
+  preload: function () {
+    this.load.image('ball', 'Img/ball.png')
+    this.load.image('hoop', 'Img/hoop.png')
+    this.load.image('frontRim', 'Img/frontRim.png')
+    this.load.image('background', 'Img/background.jpg')
+
+    this.load.image('winImg0', 'Img/winImg0.png')
+    this.load.image('winImg1', 'Img/winImg1.png')
+    this.load.image('winImg2', 'Img/winImg2.png')
+
+    this.load.image('loseImg0', 'Img/loseImg0.png')
+    this.load.image('loseImg1', 'Img/loseImg1.png')
+    this.load.image('loseImg2', 'Img/loseImg2.png')
+    
+    
+  },
+
+  create: function () {
+    
+    this.physics.world.gravity.y = 300
+    background = this.add.sprite(1000, 300, 'background')
+    background.setDepth(-2)
+    background.setScale(1);
+    background.alpha=0.3;
+
+    hoop = this.add.sprite(window.innerWidth/2, 180, 'hoop')
+    frontRim = this.add.sprite(window.innerWidth/2, 220, 'frontRim')
+    frontRim.setScale(.73)
+
+    leftRim = this.physics.add.staticImage(window.innerWidth/2-72, 155)
+    leftRim.setCircle(5)
+
+    rightRim = this.physics.add.staticImage(window.innerWidth/2+95, 155)
+    rightRim.setCircle(5)
+
+    netRims1 = this.physics.add.staticImage(274, 200)
+    netRims1.setCircle(5)
+
+    netRims2 = this.physics.add.staticImage(148, 200)
+    netRims2.setCircle(5)
+    this.loadFont('scoreBoard','Img/scoreboard.ttf');
+    scoreText = this.add.text(window.innerWidth/1.7, 50, 'SCORE: 0', { fontSize: '64px',fontFamily:'scoreBoard' , color:'#009000'});
+    this.add.text(0, window.innerHeight/1.1, 'EMBOCA 2 VECES LA PELOTA EN EL ARO PARA GANAR', { fontSize: '32px',fontFamily:'scoreBoard' , color:'#009000'});
+    //-----
+    
+    ball = this.physics.add.sprite(window.innerWidth/2, 550, 'ball').setInteractive()
+    ball.setScale(.45)
+    ball.setCircle(120, 5, 5)
+    ball.setBounce(.7)
+    ball.body.setAllowGravity(false)
+    winGroup.push(winImg0)
+    winGroup.push(winImg1)
+    winGroup.push(winImg2)
+    loseGroup.push(loseImg0)
+    loseGroup.push(loseImg1)
+    loseGroup.push(loseImg2)
+
+    ball.on('pointerdown', () => this.click())
+    this.input.on('pointerup', () => this.release())
+  },
+
+  update: function () {
+    if(ball.body.position.y > game.config.height+50 || ball.body.position.x >  window.innerWidth ||  ball.body.position.x < 0){
+        this.resetValues();
+    }
+    if(ball.body.position.y < leftRim.body.position.y- 70){
+        isBelowHoop=false;
+    }
+
+    if (!isBelowHoop ) {
+        if(ball.body.position.x > leftRim.body.position.x-50 && ball.body.position.x < rightRim.body.position.x){
+            if(ball.body.position.y > leftRim.body.position.y - 50){
+                this.winFunc() 
+            }
+        }else{
+            if(!winAnim){
+                this.looseFunc()
+            }
+            
+        }
+	}
+    if(!isBelowHoop){
+        this.physics.add.collider(ball,rightRim);
+        this.physics.add.collider(ball,leftRim);
+        //this.physics.add.collider(ball,netRims1);
+        //this.physics.add.collider(ball,netRims2);
+        frontRim.setDepth(1)
+    }
+    else{
+        this.physics.world.colliders.destroy();
+    }
+
+  },
+
+  resetValues: function () {
+    ball.setScale(.45)
+    ball.body.position.x = window.innerWidth/2
+    ball.body.position.y = 550
+    ball.body.setVelocityY(0)
+    ball.body.setVelocityX(0)
+    ball.body.setAllowGravity(false)
+    ball.body.setAllowGravity(false)
+    isBelowHoop=true;
+    frontRim.setDepth(-1)
+    if(!win && winCounter==2){
+      location.href = 'https://www.google.com.ar';
+    }
+    win=true
+    lose=true
+    winAnim=false
+    
+  },
+
+  click: function () {
+    startMouseX = game.input.mousePointer.x
+    startMouseY = game.input.mousePointer.y
+    onClick = true
+  },
+
+  release: function () {
+    if (onClick) {
+      onClick = false
+      endMouseX = game.input.mousePointer.x
+      endMouseY = game.input.mousePointer.y
+      if (endMouseY < startMouseY) {
+        var slope = [endMouseX - startMouseX, endMouseY - startMouseY]
+        var xTraj = xForce * slope[0] / slope[1]
+        if(xTraj>300){
+            xTraj=300;
+        }
+        if(xTraj>300){
+            xTraj=300;
+        }
+        if(xTraj<-300){
+            xTraj=-300;
+        }
+        this.launch(xTraj)
+      }
+    }
+  },
+
+  launch: function (xTraj) {
+    ball.body.setAllowGravity(true)
+    ball.setVelocityY(-550)
+    ball.setVelocityX(xTraj)
+    ball.body.velocity.x = xTraj
+    this.tweens.add({
+      targets: ball,
+      scaleX: 0.3,
+      scaleY: 0.3,
+      ease: 'Linear',
+      duration: 1000,
+      repeat: 0,
+      yoyo: false
+    })
+  },
+  winFunc: function (){
+    if(win){
+        winCounter++;
+        scoreText.setText('SCORE: '+winCounter);
+        win=false;
+        winAnim=true;
+        let num = Math.floor(Math.random() * 3)
+        let imageName = "winImg" + num
+        winGroup[num] = this.add.sprite(window.innerWidth/2, 300, imageName)
+
+        let appear = this.tweens.add({
+            targets:winGroup[num],
+            y:400,
+            ease: 'Elastic',
+            duration: 500,
+            repeat: 0,
+            yoyo: false
+        })
+        let fade = this.tweens.add({
+            targets:winGroup[num],
+            alpha:0,
+            ease: 'Linear',
+            duration: 1200,
+            repeat: 0,
+            yoyo: false
+        })
+    }
+  },
+
+  looseFunc: function (){
+    if(lose){
+        lose=false;
+        let num = Math.floor(Math.random() * 3)
+        let imageName = "loseImg" + num
+        loseGroup[num] = this.add.sprite(window.innerWidth/2, 300, imageName)
+
+        let appear = this.tweens.add({
+            targets:loseGroup[num],
+            y:400,
+            ease: 'Elastic',
+            duration: 500,
+            repeat: 0,
+            yoyo: false
+        })
+        let fade = this.tweens.add({
+            targets:loseGroup[num],
+            alpha:0,
+            ease: 'Linear',
+            duration: 1000,
+            repeat: 0,
+            yoyo: false
+        })
+    }
+  },
+  loadFont:function(name, url) {
+    var newFont = new FontFace(name, `url(${url})`);
+    newFont.load().then(function (loaded) {
+        document.fonts.add(loaded);
+    }).catch(function (error) {
+        return error;
+    });
+}
+
+})
+
+
+
+var config = {
+  type: Phaser.AUTO,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: window.innerWidth * window.devicePixelRatio,
+    height: window.innerHeight * window.devicePixelRatio
+},
+  physics: {
+    default: 'arcade',
+    arcade: {
+      debug: false,
+      gravity: { y: 150 }
+    }
+  },
+  pixelArt: false,//here
+  //antialias: false,
+  scene: [MyScene]
+}
+
+
+var game = new Phaser.Game(config)
+    </script>
 </body>
 </html>

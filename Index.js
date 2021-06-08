@@ -6,6 +6,7 @@ var onClick = false
 var launched = false
 var isBelowHoop = true
 var win = true
+var winCounter = 0;
 var lose = true
 var winAnim=false
 var winImg0,winImg1,winImg2,loseImg0,loseImg1,loseImg2
@@ -116,7 +117,7 @@ let MyScene = new Phaser.Class({
     ball.body.setAllowGravity(false)
     isBelowHoop=true;
     frontRim.setDepth(-1)
-    if(!win){
+    if(!win && winCounter==2){
       location.href = 'https://www.google.com.ar';
     }
     win=true
@@ -170,6 +171,7 @@ let MyScene = new Phaser.Class({
   },
   winFunc: function (){
     if(win){
+        winCounter++;
         win=false;
         winAnim=true;
         let num = Math.floor(Math.random() * 3)
@@ -227,8 +229,12 @@ let MyScene = new Phaser.Class({
 
 var config = {
   type: Phaser.AUTO,
-  width: 400,
-  height: 625,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 1600,
+    height: 768
+},
   physics: {
     default: 'arcade',
     arcade: {
